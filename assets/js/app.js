@@ -45,7 +45,7 @@ var rpsGame = {
 }
 
 
-function player(name) {
+function player() {
   self = this;
   this.init = function(name) {
     self.wins = 0;
@@ -58,8 +58,13 @@ function player(name) {
   this.lostGame = function() {
     self.losses++;
   };
-  getPlayerNumber = function() {
-    database.ref("players").child("one").exists() ? self.player_number = "two": self.player_number = "one";
+  this.getPlayerNumber = function() {
+    database.ref("players")
+      .child("one")
+      .once("value")
+      .then(function(snap){
+      snap.exists() ? self.player_number = "two": self.player_number = "one";
+    });
   };
 }
 
@@ -68,28 +73,35 @@ var gameController = {
 
   storeUser: function(user) {
     var player = "player" + this.player_number;
-    database.ref().set({"players" : { user.player_number : { "name": user.name,
+    database.ref("players").update({ [user.player_number] : { "name": user.name,
                                      "wins": user.wins,
-                                     "losses": user.losses}}});
+                                     "losses": user.losses}});
   },
-  acceptMove: function() {},
+  acceptMove: function() {
+
+
+
+  },
   submitMove: function() {
   },
-  opponentListener: function() {
-    database.ref("players").orderByValue().on("child_added", function(snapshot) {
-      console.log(snapshot);
-    })
-  },
+  // opponentListener: function() {
+  //   database.ref("players").orderByValue().on("child_added", function(snapshot) {
+  //     console.log(snapshot);
+  //   })
+  // },
   removeUser: function() {
 
   }
 }
 
 var chatController = {
-  submitMessage: function() {
-
+  submitMessage: function(text) {
+    database.ref("chat").push(text);
   },
   updateScroll: function () {
-
+    database.ref("chat").on("child_added", function(snapshot){
+      var message = $("<p>").text(snapshot.val());
+      message.appendTo($("#chat"))
+    })
   }
 }
