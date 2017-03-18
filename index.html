@@ -19,18 +19,26 @@
     <header>
       RPS - Online Multiplayer
     </header>
-    <input type="text" placeholder="Please Enter Your Username"></input>
-    <button>Submit</button>
-    <section id="game">
-      <section id="player1"></section>
-      <section id="outcome"></section>
-      <section id="player2"></section>
+    <section id="top">
+      <input id="username" type="text" placeholder="Please Enter Your Username" value=""></input>
+      <button id="userSubmit" class="btn">Submit</button>
+    </section>
+    <section id="game" class="row">
+      <section id="player1" class="col-md-4">
+        <h3>Player 1</h3>
+      </section>
+      <section id="outcome" class="col col-md-4">
+        <h3>Outcome</h3>
+      </section>
+      <section id="player2" class="col col-md-4">
+        <h3>Player 2</h3>
+      </section>
 
     </section>
     <section id="chat">
       <section id="previous"></section>
       <input id="send" placeholder="New Message"></input>
-      <button>Send</button>
+      <button id="messager" class="btn">Send</button>
     </section>
     <footer>
 

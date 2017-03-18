@@ -10,19 +10,19 @@ firebase.initializeApp(config);
 const database = firebase.database();
 
 var rpsGame = {
-  init: function(first, second) {
-    this.p1 = first ;
-    this.p2 = second;
-    this.turn = first;
-  },
-  makeMove: function(player, choice) {
-    if(player == this.p1) {
-      this.playerMove = choice;
-      this.turn = this.p2;
-    } else {
-      this.findResult(this.playerMove, choice);
-    }
-  },
+  // init: function(first, second) {
+  //   this.p1 = first ;
+  //   this.p2 = second;
+  //   this.turn = first;
+  // },
+  // makeMove: function(player, choice) {
+  //   if(player == this.p1) {
+  //     this.playerMove = choice;
+  //     this.turn = this.p2;
+  //   } else {
+  //     this.findResult(this.playerMove, choice);
+  //   }
+  // },
   findResult: function (user, opponent) {
     if(user == opponent) {
       return this.CONST.tie;
@@ -45,7 +45,7 @@ var rpsGame = {
 }
 
 
-function player() {
+function Player() {
   self = this;
   this.init = function(name) {
     self.wins = 0;
@@ -58,50 +58,146 @@ function player() {
   this.lostGame = function() {
     self.losses++;
   };
-  this.getPlayerNumber = function() {
+}
+
+
+var gameController = {
+  getPlayerNumber: function() {
+    var self = this;
     database.ref("players")
       .child("one")
       .once("value")
       .then(function(snap){
       snap.exists() ? self.player_number = "two": self.player_number = "one";
-    });
-  };
-}
-
-
-var gameController = {
-
+    })
+  },
+  setUsername: function(name) {
+    this.username = name;
+  },
   storeUser: function(user) {
-    var player = "player" + this.player_number;
-    database.ref("players").update({ [user.player_number] : { "name": user.name,
+    database.ref("players").update({ [this.player_number] : { "name": user.name,
                                      "wins": user.wins,
                                      "losses": user.losses}});
   },
-  acceptMove: function() {
-
-
-
+  findGameOutcome: function() {
+    var self = this;
+    database.ref("players")
+    .once("value")
+    .then(function(snap) {
+      var moveOne = snap.val().one.move;
+      var moveTwo = snap.val().two.move;
+      var result = self.player_number == "one"
+        ? rpsGame.findResult(moveOne, moveTwo)
+        : rpsGame.findResult(moveTwo, moveOne);
+      domManipulators.renderOutcome(result);
+    })
   },
-  submitMove: function() {
+  acceptMove: function(move) {
+    database.ref("players/" + this.player_number)
+      .update({"move": move});
   },
-  // opponentListener: function() {
-  //   database.ref("players").orderByValue().on("child_added", function(snapshot) {
-  //     console.log(snapshot);
-  //   })
-  // },
+
+  opponentListener: function(user) {
+    var self = this;
+    database.ref("players").on("child_added", function(snapshot) {
+      if(self.player_number != snapshot.key){
+        domManipulators.opponentJoin(snapshot.val().name);
+      }
+    })
+  },
   removeUser: function() {
-
+    database.ref("players/" + this.player_number).set(null);
   }
 }
+
 
 var chatController = {
   submitMessage: function(text) {
     database.ref("chat").push(text);
   },
+
   updateScroll: function () {
     database.ref("chat").on("child_added", function(snapshot){
       var message = $("<p>").text(snapshot.val());
-      message.appendTo($("#chat"))
+      message.appendTo($("#previous"))
     })
   }
 }
+
+var domManipulators = {
+  userJoin: function(name) {
+    $("#top").empty();
+    $("<h2>").text("User: " + name).prependTo($("#player1"));
+  },
+
+  opponentJoin: function(name) {
+    $("<h2>").text("Opponent: "+ name).prependTo($("#player2"))
+  },
+
+  renderChoices: function(userId) {
+    var rock = $("<h3>").text("ROCK").data("pick", "r");
+    var paper = $("<h3>").text("PAPER").data("pick", "p");
+    var scissors = $("<h3>").text("SCISSORS").data("pick", "s");
+    $(userId)
+      .append(rock)
+      .append(paper)
+      .append(scissors);
+  },
+
+  renderWaiting: function() {
+    $("#player1").empty().append($("<h4>").text("Waiting for Opponent"));
+  },
+
+  addChoiceListener: function() {
+    var self = this;
+    $("#player1").on("click", "h3", function() {
+      var choice = $(this).data("pick");
+      gameController.acceptMove(choice);
+      self.renderWaiting()
+    })
+  },
+
+  renderOutcome: function (outcome) {
+   $("<h4>").text(outcome).appendTo($("#outcome"));
+ },
+  reset: function() {
+
+  }
+
+}
+
+
+$(document).ready(function() {
+  //find out player number from database
+  gameController.getPlayerNumber();
+  domManipulators.renderChoices("#player1");
+  domManipulators.renderChoices("#player2");
+
+  $("#userSubmit").on("click", function() {
+    var userName = $("#username").val().trim();
+    var current = userName ? new Player() : null;
+    if(current){
+      current.init(userName);
+      gameController.setUsername(userName)
+      gameController.storeUser(current);
+      gameController.opponentListener();
+      domManipulators.userJoin(current.name);
+      domManipulators.addChoiceListener();
+    } else {
+      $("#username").val("");
+    }
+  });
+
+  $("#messager").on("click", function() {
+    var text = gameController.username + ": " + $("#send").val().trim();
+    console.log(text);
+    chatController.submitMessage(text);
+    $("#send").val("");
+  });
+});
+
+$(window).on("unload", function(){
+  var text = gameController.username + " disconnected.";
+  chatController.submitMessage(text);
+  gameController.removeUser();
+});
