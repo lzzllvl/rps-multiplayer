@@ -1,21 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <!-- Jquery -->
-  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-  <!-- Bootstrap CDN-->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-  <!-- Firebase Reference -->
-  <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- Jquery -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <!-- Bootstrap CDN-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <!-- Firebase Reference -->
+    <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
 
-  <link rel="stylesheet" href="assets/css/style.css">
-  <title>RPS Multiplayer</title>
-</head>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <title>RPS Multiplayer</title>
+  </head>
   <body>
+    <header>
+      RPS - Online Multiplayer
+    </header>
+    <input type="text" placeholder="Please Enter Your Username"></input>
+    <button>Submit</button>
+    <section id="game">
+      <section id="player1"></section>
+      <section id="outcome"></section>
+      <section id="player2"></section>
+
+    </section>
+    <section id="chat">
+      <section id="previous"></section>
+      <input id="send" placeholder="New Message"></input>
+      <button>Send</button>
+    </section>
+    <footer>
+
+    </footer>
 
   </body>
   <script src="assets/js/app.js"></script>
