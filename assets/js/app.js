@@ -10,19 +10,7 @@ firebase.initializeApp(config);
 const database = firebase.database();
 
 var rpsGame = {
-  // init: function(first, second) {
-  //   this.p1 = first ;
-  //   this.p2 = second;
-  //   this.turn = first;
-  // },
-  // makeMove: function(player, choice) {
-  //   if(player == this.p1) {
-  //     this.playerMove = choice;
-  //     this.turn = this.p2;
-  //   } else {
-  //     this.findResult(this.playerMove, choice);
-  //   }
-  // },
+
   findResult: function (user, opponent) {
     if(user == opponent) {
       return this.CONST.tie;
@@ -37,6 +25,7 @@ var rpsGame = {
       return opponent == "r" ? this.CONST.loss: this.CONST.win;
     }
   },
+  
   CONST: {
     win: "Congrats! You Won!",
     loss: "Too Bad, You Lost.",
