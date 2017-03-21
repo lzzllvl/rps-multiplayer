@@ -25,14 +25,13 @@ var rpsGame = {
       return opponent == "r" ? this.CONST.loss: this.CONST.win;
     }
   },
-  
+
   CONST: {
     win: "Congrats! You Won!",
     loss: "Too Bad, You Lost.",
     tie: "It's a tie, meh."
   }
 }
-
 
 function Player() {
   self = this;
@@ -49,7 +48,6 @@ function Player() {
   };
 }
 
-
 var gameController = {
   getPlayerNumber: function() {
     var self = this;
@@ -60,8 +58,8 @@ var gameController = {
       snap.exists() ? self.player_number = "two": self.player_number = "one";
     })
   },
-  setUsername: function(name) {
-    this.username = name;
+  setUser: function(playerObject) {
+    this.user = playerObject ;
   },
   storeUser: function(user) {
     database.ref("players").update({ [this.player_number] : { "name": user.name,
@@ -78,6 +76,8 @@ var gameController = {
       var result = self.player_number == "one"
         ? rpsGame.findResult(moveOne, moveTwo)
         : rpsGame.findResult(moveTwo, moveOne);
+
+
       domManipulators.renderOutcome(result);
     })
   },
@@ -94,11 +94,25 @@ var gameController = {
       }
     })
   },
+
+  opponentMoveListener: function() {
+    var opponentNumber = this.player_number == "one" ? "two": "one";
+    var self = this;
+    database.ref("players/" + this.player_number + "/move").on("value", function(snapshot){
+      if(snapshot.exists()){
+        database.ref("players/" + opponentNumber + "/move").on("value", function(snap){
+          snap.exists()
+              ? self.findGameOutcome()
+              :null;
+        })
+      };
+    });
+  },
+
   removeUser: function() {
     database.ref("players/" + this.player_number).set(null);
   }
 }
-
 
 var chatController = {
   submitMessage: function(text) {
@@ -108,7 +122,7 @@ var chatController = {
   updateScroll: function () {
     database.ref("chat").on("child_added", function(snapshot){
       var message = $("<p>").text(snapshot.val());
-      message.appendTo($("#previous"))
+      message.appendTo($("#previous"));
     })
   }
 }
@@ -116,11 +130,13 @@ var chatController = {
 var domManipulators = {
   userJoin: function(name) {
     $("#top").empty();
+    //$("#player1:first-child").remove();
     $("<h2>").text("User: " + name).prependTo($("#player1"));
   },
 
   opponentJoin: function(name) {
-    $("<h2>").text("Opponent: "+ name).prependTo($("#player2"))
+    $("#player2:first-child").remove();
+    $("<h2>").text("Opponent: " + name).prependTo($("#player2"));
   },
 
   renderChoices: function(userId) {
@@ -134,7 +150,11 @@ var domManipulators = {
   },
 
   renderWaiting: function() {
-    $("#player1").empty().append($("<h4>").text("Waiting for Opponent"));
+    var user = $("#player1>h2");
+    $("#player1").empty()
+      .append($("<h4>")
+      .text("Waiting for Opponent"))
+      .prepend(user);
   },
 
   addChoiceListener: function() {
@@ -142,34 +162,44 @@ var domManipulators = {
     $("#player1").on("click", "h3", function() {
       var choice = $(this).data("pick");
       gameController.acceptMove(choice);
-      self.renderWaiting()
+      self.renderWaiting();
     })
   },
 
   renderOutcome: function (outcome) {
-   $("<h4>").text(outcome).appendTo($("#outcome"));
- },
+    $("<h4>").text(outcome).appendTo($("#outcome"));
+  },
+
   reset: function() {
-
+    var self  = this;
+    $("#outcome").empty();
+    ["#player1", "#player2"].forEach(function(curr) {
+      var name = $(curr + "> h2");
+      $(curr).empty().append(name);
+      self.renderChoices(curr);
+    });
   }
-
 }
 
 
 $(document).ready(function() {
-  //find out player number from database
+
   gameController.getPlayerNumber();
   domManipulators.renderChoices("#player1");
   domManipulators.renderChoices("#player2");
 
   $("#userSubmit").on("click", function() {
+    //find out player number from database
+
     var userName = $("#username").val().trim();
     var current = userName ? new Player() : null;
     if(current){
       current.init(userName);
-      gameController.setUsername(userName)
+
+      gameController.setUser(current);
       gameController.storeUser(current);
       gameController.opponentListener();
+      gameController.opponentMoveListener();
       domManipulators.userJoin(current.name);
       domManipulators.addChoiceListener();
     } else {
@@ -179,7 +209,6 @@ $(document).ready(function() {
 
   $("#messager").on("click", function() {
     var text = gameController.username + ": " + $("#send").val().trim();
-    console.log(text);
     chatController.submitMessage(text);
     $("#send").val("");
   });
