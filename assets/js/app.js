@@ -130,7 +130,6 @@ var chatController = {
 var domManipulators = {
   userJoin: function(name) {
     $("#top").empty();
-    //$("#player1:first-child").remove();
     $("<h2>").text("User: " + name).prependTo($("#player1"));
   },
 
@@ -167,7 +166,26 @@ var domManipulators = {
   },
 
   renderOutcome: function (outcome) {
+    var self = this;
+    ["#player1", "#player2"].forEach((curr) => {
+      var nameNode = $(curr + "> h2");
+      $(curr).empty().append(nameNode);
+
+    });
     $("<h4>").text(outcome).appendTo($("#outcome"));
+    self.renderPlayAgain();
+    $("#resetButton").on("click", function(){
+      //need to delete the moves from the database
+      database.ref("players/one/move").set(null);
+      database.ref("players/two/move").set(null);
+      self.reset();
+    });
+  },
+
+  renderPlayAgain: function () {
+    $("<button>").attr("id", "resetButton")
+      .text("Play Again?")
+      .appendTo($("#outcome"));
   },
 
   reset: function() {
@@ -208,7 +226,7 @@ $(document).ready(function() {
   });
 
   $("#messager").on("click", function() {
-    var text = gameController.username + ": " + $("#send").val().trim();
+    var text = gameController.user.name + ": " + $("#send").val().trim();
     chatController.submitMessage(text);
     $("#send").val("");
   });
