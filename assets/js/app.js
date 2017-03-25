@@ -115,16 +115,22 @@ var gameController = {
 }
 
 var chatController = {
+  clearMessages: function(){
+    database.ref("players")
+      .once("value")
+      .then(function(snap){
+      if(!snap.val().one){
+        if(!snap.val().two){
+          database.ref("chat").set(null);
+        }
+      }
+    })
+  },
   submitMessage: function(text) {
     database.ref("chat").push(text);
   },
 
-  updateScroll: function () {
-    database.ref("chat").on("child_added", function(snapshot){
-      var message = $("<p>").text(snapshot.val());
-      message.appendTo($("#previous"));
-    })
-  }
+
 }
 
 var domManipulators = {
@@ -188,6 +194,15 @@ var domManipulators = {
       .appendTo($("#outcome"));
   },
 
+  updateScroll: function () {
+    database.ref("chat").on("child_added", function(snapshot){
+      var messageRow = $("<tr>")
+      $("<td>").text(snapshot.val())
+      .appendTo(messageRow);
+      messageRow.appendTo($("#previous > tbody"));
+    })
+  },
+
   reset: function() {
     var self  = this;
     $("#outcome").empty();
@@ -201,10 +216,10 @@ var domManipulators = {
 
 
 $(document).ready(function() {
-
   gameController.getPlayerNumber();
   domManipulators.renderChoices("#player1");
   domManipulators.renderChoices("#player2");
+  domManipulators.updateScroll();
 
   $("#userSubmit").on("click", function() {
     //find out player number from database
@@ -213,7 +228,6 @@ $(document).ready(function() {
     var current = userName ? new Player() : null;
     if(current){
       current.init(userName);
-
       gameController.setUser(current);
       gameController.storeUser(current);
       gameController.opponentListener();
@@ -233,7 +247,10 @@ $(document).ready(function() {
 });
 
 $(window).on("unload", function(){
-  var text = gameController.username + " disconnected.";
-  chatController.submitMessage(text);
-  gameController.removeUser();
+  if(gameController.username){
+    var text = gameController.username + " disconnected.";
+    chatController.submitMessage(text);
+    gameController.removeUser();
+    chatController.clearMessages();
+  }
 });
